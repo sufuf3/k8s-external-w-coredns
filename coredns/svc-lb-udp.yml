@@ -1,0 +1,29 @@
+# CLUSTER_DNS_IP=$(kubectl get service --namespace kube-system kube-dns -o jsonpath="{.spec.clusterIP}")
+# sed -e s/EXTERNAL_IP/$EXTERNAL_IP/g
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-coredns-udp
+  namespace: kube-system
+  annotations:
+    prometheus.io/port: "9153"
+    prometheus.io/scrape: "true"
+  labels:
+    k8s-app: kube-dns
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: "CoreDNS"
+spec:
+  selector:
+    k8s-app: kube-dns
+  type: LoadBalancer
+  externalIPs:
+  - LB_VIP_ADDRESS
+  ports:
+  - name: dns
+    port: 53
+    protocol: UDP
+  #- name: metrics
+  #  port: 9153
+  #  protocol: TCP
+

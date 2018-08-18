@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: kube-system
+  labels:
+    k8s-app: external-dns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      k8s-app: external-dns
+  template:
+    metadata:
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+      labels:
+        k8s-app: external-dns
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: In
+                values:
+                - ''
+      serviceAccountName: external-dns
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      containers:
+      - name: external-dns
+        image: registry.opensource.zalan.do/teapot/external-dns:v0.5.4
+        env:
+        - name: ETCD_URLS
+          value: ETCD_SERVERS
+        - name: ETCD_CA_FILE
+          value: /etc/etcd/ssl/etcd-ca.pem
+        - name: ETCD_CERT_FILE
+          value: /etc/etcd/ssl/etcd.pem
+        - name: ETCD_KEY_FILE
+          value: /etc/etcd/ssl/etcd-key.pem
+        args:
+        - --provider=coredns
+        - --source=service
+        - --source=ingress
+        - --registry=txt
+        - --interval=15s
+        - --log-level=debug
+        volumeMounts:
+        - mountPath: /etc/etcd/ssl
+          name: etcd-ca-certs
+          readOnly: true
+      volumes:
+      - hostPath:
+          path: /etc/etcd/ssl
+          type: DirectoryOrCreate
+        name: etcd-ca-certs
+
