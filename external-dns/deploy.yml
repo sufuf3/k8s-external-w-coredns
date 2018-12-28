@@ -34,7 +34,7 @@ spec:
         key: node-role.kubernetes.io/master
       containers:
       - name: external-dns
-        image: registry.opensource.zalan.do/teapot/external-dns:v0.5.4
+        image: registry.opensource.zalan.do/teapot/external-dns:v0.5.9
         env:
         - name: ETCD_URLS
           value: ETCD_SERVERS
